@@ -1,0 +1,96 @@
+import tkinter as tk
+from tkinter import messagebox
+from datetime import datetime
+
+# --- CONFIGURAÇÕES OPERACIONAIS DA PREFEITURA ---
+# Disciplina: Prática Profissional Supervisionada
+# Discentes: Fernando Dantas e Regiane Santos
+LIMITE_DIARIO = 100
+contador_normal = 0
+contador_prioritario = 0
+total_senhas_emitidas = 0
+
+def emitir_senha(tipo_atendimento, eh_prioritario):
+    global contador_normal, contador_prioritario, total_senhas_emitidas
+    
+    # 1. CONTROLE DE LIMITE DIÁRIO (Critério de Regra de Negócio)
+    if total_senhas_emitidas >= LIMITE_DIARIO:
+        messagebox.showerror("Bloqueio Administrativo", "Atendimentos esgotados para hoje")
+        return
+
+    # 2. SANITIZAÇÃO E VALIDAÇÃO DE INPUT (Evita erros de navegação)
+    ano_nascto = entry_ano.get().strip()
+    if not ano_nascto.isdigit() or len(ano_nascto) != 4:
+        messagebox.showwarning("Erro de Validação", "Por favor, insira um ano de nascimento válido (4 dígitos).")
+        return
+    
+    # 3. ORGANIZAÇÃO AUTOMÁTICA DA FILA (Lei Federal nº 10.048)
+    horario_emissao = datetime.now().strftime("%H:%M:%S")
+    if eh_prioritario:
+        contador_prioritario += 1
+        senha = f"P{contador_prioritario:03d}"
+        tipo_texto = "PRIORITÁRIO"
+    else:
+        contador_normal += 1
+        senha = f"N{contador_normal:03d}"
+        tipo_texto = "NORMAL"
+        
+    total_senhas_emitidas += 1
+    
+    # 4. FORMATAÇÃO DO TICKET DE SAÍDA
+    ticket_layout = (
+        "=== PREFEITURA DE GRAJAÚ ===\n"
+        f"SENHA EMITIDA: {senha}\n"
+        f"Fila: {tipo_texto}\n"
+        f"Serviço: {tipo_atendimento}\n"
+        f"Horário: {horario_emissao}\n"
+        "===========================\n"
+        "Aguarde ser chamado no painel."
+    )
+    messagebox.showinfo("Totem Grajaú - Ticket Emitido", ticket_layout)
+    
+    # Limpeza e Atualização dos Componentes de Tela
+    entry_ano.delete(0, tk.END)
+    lbl_painel_vagas.config(text=f"Senhas Emitidas Hoje: {total_senhas_emitidas}/{LIMITE_DIARIO}")
+
+# --- ARQUITETURA DA INTERFACE GRÁFICA (GUI ACCESSIBLE) ---
+janela = tk.Tk()
+janela.title("SISTEMA DE AUTOATENDIMENTO - PREFEITURA DE GRAJAÚ")
+janela.geometry("580x640")
+janela.configure(bg="#F7FAFC")
+
+# Título do Terminal Urbano
+lbl_titulo = tk.Label(janela, text="SISTEMA DE SENHAS - GRAJAÚ", font=("Arial", 18, "bold"), bg="#F7FAFC", fg="#1A365D")
+lbl_titulo.pack(pady=15)
+
+# Zona de Input de Triagem
+lbl_ano = tk.Label(janela, text="Informe o seu Ano de Nascimento:", font=("Arial", 12), bg="#F7FAFC", fg="#2D3748")
+lbl_ano.pack(pady=4)
+entry_ano = tk.Entry(janela, font=("Arial", 14), width=12, justify="center", bd=2)
+entry_ano.pack(pady=4)
+entry_ano.insert(0, "1990") # Valor padrão sugestivo
+
+# Painel de Seleção de Serviços
+frame_botoes = tk.LabelFrame(janela, text=" Selecione o Serviço de Triagem ", font=("Arial", 11, "bold"), bg="#F7FAFC", padx=10, pady=10)
+frame_botoes.pack(pady=15, fill="both", expand=True, padx=25)
+
+# Atendimento Comum
+tk.Label(frame_botoes, text="Atendimento Geral / Normal:", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#4A5568").pack(anchor="w", pady=4)
+servicos = ["Emissão de Documento Novo", "2ª Via de Documento", "Atualização de Dados"]
+
+for s in servicos:
+    btn = tk.Button(frame_botoes, text=s, font=("Arial", 11), bg="#3182CE", fg="white", activebackground="#2B6CB0", height=1, command=lambda serv=s: emitir_senha(serv, False))
+    btn.pack(fill="x", pady=3)
+
+# Atendimento Prioritário Destacado (Lei 10.048)
+tk.Label(frame_botoes, text="Atendimento Prioritário (Lei Federal nº 10.048):", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#E53E3E").pack(anchor="w", pady=8)
+btn_prio = tk.Button(frame_botoes, text="EMITIR SENHA PRIORITÁRIA\n(Idoso / PCD / Gestante / Colo)", font=("Arial", 11, "bold"), bg="#E53E3E", fg="white", activebackground="#C53030", height=2, command=lambda: emitir_senha("Atendimento Prioritário Geral", True))
+btn_prio.pack(fill="x", pady=2)
+
+# Monitoramento de Telemetria Local
+lbl_status = tk.Label(janela, text="● Terminal Online e Conectado à Rede LAN", font=("Arial", 10, "italic"), bg="#F7FAFC", fg="#38A169")
+lbl_status.pack(pady=5)
+lbl_painel_vagas = tk.Label(janela, text=f"Senhas Emitidas Hoje: 0/{LIMITE_DIARIO}", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#718096")
+lbl_painel_vagas.pack(pady=5)
+
+janela.mainloop()
